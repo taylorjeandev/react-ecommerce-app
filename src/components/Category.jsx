@@ -8,12 +8,12 @@ const Category = ({ category, handleCategoryChange }) => {
           id="category-list"
           onChange={handleCategoryChange}
         >
-          <option value="">All</option>
+          <option value="All">All</option>
           {category.map((category, index) => {
             return (
               <option
                 key={index}
-                onClick={handleCategoryChange}
+                onChange={handleCategoryChange}
                 value={category}
               >
                 {category}

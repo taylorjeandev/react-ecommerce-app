@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
-import Header from "./components/Header";
-import Search from "./components/Search";
-import CardBody from "./components/CardBody";
-import Category from "./components/Category";
+import { useState, useEffect, createContext, useMemo } from "react";
+import { Route, Routes, Link, Outlet } from "react-router-dom";
+import Cart from "./components/Cart";
+import Shop from "./components/Shop";
 import "./App.css";
+
+export const ShopContext = createContext(null);
 
 function App() {
   const [items, setItem] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchValue, setSearchValue] = useState("");
-  const [addedItems, setAddedItem] = useState([]);
-  const [showAddProducts, setShowAddProducts] = useState(false);
 
   useEffect(() => {
     fetch("https://fakestoreapi.com/products/")
@@ -25,20 +24,22 @@ function App() {
       .then((data) => setCategories(data));
   }, []);
 
-  useEffect(() => {
-    const filteredItems = items.filter((item) => {
-      return item.category === selectedCategory || selectedCategory === "";
-    });
-    setItem(filteredItems);
-  }, [selectedCategory]);
-
   function handleCategoryChange(event) {
     setSelectedCategory(event.target.value);
   }
-
   function changingSearchData(e) {
     setSearchValue(e.target.value);
   }
+
+  function getFilteredList() {
+    if (selectedCategory === "All") {
+      return setItem(items);
+    } else {
+      return items.filter((item) => item.category === selectedCategory);
+    }
+  }
+
+  const filteredList = useMemo(getFilteredList, [selectedCategory, items]);
 
   const itemsFilter = items.filter((item) =>
     item.title.toLowerCase().includes(searchValue.toLowerCase())
@@ -57,25 +58,61 @@ function App() {
 
   return (
     <div className="container">
-      <Header />
-      <Search
-        products={items}
-        value={searchValue}
-        onChangeData={changingSearchData}
-      />
-      <Category
-        category={categories}
-        handleCategoryChange={handleCategoryChange}
-      />
-      <div className="grid">
-        <CardBody
-          categories={selectedCategory}
-          products={itemsFilter}
-          addItem={addItem}
-          removeItem={removeItem}
-          addedItems={addedItems}
-        />
-      </div>
+      <ShopContext.Provider
+        value={{
+          items,
+          categories,
+          selectedCategory,
+          searchValue,
+        }}
+      >
+        <h1>Telenor</h1>
+        <nav>
+          <li>
+            <Link
+              to={"/"}
+              state={{
+                items: items,
+                category: categories,
+                selectedCategory: selectedCategory,
+                searchValue: searchValue,
+              }}
+            >
+              Shop
+            </Link>
+          </li>
+          <li>
+            <Link
+              to={"/cart"}
+              state={{
+                items: items,
+                selectedCategory: selectedCategory,
+                searchValue: searchValue,
+              }}
+            >
+              Cart
+            </Link>
+          </li>
+        </nav>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Shop
+                handleCategoryChange={handleCategoryChange}
+                changingSearchData={changingSearchData}
+                getFilteredList={getFilteredList}
+                filteredList={filteredList}
+                itemsFilter={itemsFilter}
+                addItem={addItem}
+                removeItem={removeItem}
+              />
+            }
+          />
+          <Route path="/cart" element={<Cart />} />
+        </Routes>
+        <Outlet />
+      </ShopContext.Provider>
     </div>
   );
 }

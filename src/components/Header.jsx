@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 export default function Header() {
   return (
     <header>
-      <h1>Shopping</h1>
+      <Link to="/">Telenor </Link>
+      <Link to="/cart">Cart </Link>
     </header>
   );
 }
