@@ -2,7 +2,9 @@ import { useState, useEffect, createContext, useMemo } from "react";
 import { Route, Routes, Link, Outlet } from "react-router-dom";
 import Cart from "./components/Cart";
 import Shop from "./components/Shop";
+import Card from "./components/Card";
 import "./App.css";
+import SingleProduct from "./components/SingleProduct";
 
 export const ShopContext = createContext(null);
 
@@ -110,6 +112,10 @@ function App() {
             }
           />
           <Route path="/cart" element={<Cart />} />
+          <Route
+            path=":id"
+            element={<SingleProduct product={items} addItem={addItem} />}
+          />
         </Routes>
         <Outlet />
       </ShopContext.Provider>
