@@ -1,15 +1,16 @@
-import Card from "./Card";
+import ProductCard from "./ProductCard";
 import { useContext } from "react";
 import { ShopContext } from "../App";
+import { Box } from "@chakra-ui/react";
 
 const CardBody = ({ products, addItem, removeItem, filteredList }) => {
   const { selectedCategory } = useContext(ShopContext);
 
   return (
-    <div className="grid">
+    <Box className="grid">
       {selectedCategory === "All"
         ? products.map((product) => (
-            <Card
+            <ProductCard
               key={product.id}
               product={product}
               addItem={addItem}
@@ -17,14 +18,14 @@ const CardBody = ({ products, addItem, removeItem, filteredList }) => {
             />
           ))
         : filteredList.map((product) => (
-            <Card
+            <ProductCard
               key={product.id}
               product={product}
               addItem={addItem}
               removeItem={removeItem}
             />
           ))}
-    </div>
+    </Box>
   );
 };
 

@@ -1,8 +1,9 @@
 import { useState, useEffect, createContext, useMemo } from "react";
-import { Route, Routes, Link, Outlet } from "react-router-dom";
+import { Route, Routes, Outlet } from "react-router-dom";
+import { Heading } from "@chakra-ui/react";
 import Cart from "./components/Cart";
 import Shop from "./components/Shop";
-import Card from "./components/Card";
+import Navbar from "./components/Navbar";
 import "./App.css";
 import SingleProduct from "./components/SingleProduct";
 
@@ -13,6 +14,13 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchValue, setSearchValue] = useState("");
+
+  const [addedItems, setAddedItems] = useState(() => {
+    const data = JSON.parse(localStorage.getItem("itemsInCart"));
+    if (data !== null) {
+      return data;
+    }
+  });
 
   useEffect(() => {
     fetch("https://fakestoreapi.com/products/")
@@ -25,6 +33,11 @@ function App() {
       .then((res) => res.json())
       .then((data) => setCategories(data));
   }, []);
+
+  // Store items in local storage
+  useEffect(() => {
+    localStorage.setItem("itemsInCart", JSON.stringify(addedItems));
+  }, [addedItems]);
 
   function handleCategoryChange(event) {
     setSelectedCategory(event.target.value);
@@ -48,14 +61,16 @@ function App() {
   );
 
   function addItem(item) {
-    item.addNumber = 1;
+    if (addedItems.includes(item)) {
+      return null;
+    }
     const itemArr = addedItems;
-    setAddedItem([...itemArr, item]);
+    setAddedItems([...itemArr, item]);
   }
 
-  function removeItem(item) {
-    const newItems = addedItems.filter((addedItem) => addedItem.id !== item.id);
-    setAddedItem(newItems);
+  function removeItem(id) {
+    const newItems = addedItems.filter((item) => item.id !== id);
+    setAddedItems(newItems);
   }
 
   return (
@@ -66,36 +81,11 @@ function App() {
           categories,
           selectedCategory,
           searchValue,
+          addedItems,
         }}
       >
-        <h1>Telenor</h1>
-        <nav>
-          <li>
-            <Link
-              to={"/"}
-              state={{
-                items: items,
-                category: categories,
-                selectedCategory: selectedCategory,
-                searchValue: searchValue,
-              }}
-            >
-              Shop
-            </Link>
-          </li>
-          <li>
-            <Link
-              to={"/cart"}
-              state={{
-                items: items,
-                selectedCategory: selectedCategory,
-                searchValue: searchValue,
-              }}
-            >
-              Cart
-            </Link>
-          </li>
-        </nav>
+        <Heading as="h1">Ecommerce</Heading>
+        <Navbar />
         <Routes>
           <Route
             path="/"
@@ -111,7 +101,7 @@ function App() {
               />
             }
           />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<Cart removeItem={removeItem} />} />
           <Route
             path=":id"
             element={<SingleProduct product={items} addItem={addItem} />}

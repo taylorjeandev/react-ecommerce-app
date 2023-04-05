@@ -1,14 +1,16 @@
+import { Box, Input } from "@chakra-ui/react";
 function Search({ value, onChangeData }) {
   return (
-    <div>
-      <input
+    <Box as="div" m={2}>
+      <Input
+        maxW="400px"
         className="search"
         type="text"
         placeholder="Enter product name"
         value={value}
         onChange={onChangeData}
       />
-    </div>
+    </Box>
   );
 }
 

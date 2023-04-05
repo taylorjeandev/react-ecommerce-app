@@ -5,6 +5,7 @@ import { ShopContext } from "../App";
 export default function SingleProduct({ addItem }) {
   const { items } = useContext(ShopContext);
   const { id } = useParams();
+
   return (
     <div className="card">
       <img src={items[id - 1].image} alt="" />
