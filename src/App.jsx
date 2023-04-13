@@ -1,11 +1,16 @@
 import { useState, useEffect, createContext, useMemo } from "react";
-import { Route, Routes, Outlet } from "react-router-dom";
-import { Heading } from "@chakra-ui/react";
+import { Route, Routes, Outlet, useNavigate } from "react-router-dom";
+import { Button, Heading, Avatar } from "@chakra-ui/react";
 import Cart from "./components/Cart";
 import Shop from "./components/Shop";
 import Navbar from "./components/Navbar";
+import Signup from "./components/Signup";
+import Login from "./components/Login";
 import "./App.css";
 import SingleProduct from "./components/SingleProduct";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export const ShopContext = createContext(null);
 
@@ -14,6 +19,8 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchValue, setSearchValue] = useState("");
+  const [user, loading, error] = useAuthState(auth);
+  const navigate = useNavigate();
 
   const [addedItems, setAddedItems] = useState(() => {
     const data = JSON.parse(localStorage.getItem("itemsInCart"));
@@ -23,16 +30,48 @@ function App() {
   });
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products/")
-      .then((res) => res.json())
-      .then((data) => setItem(data));
+    const fetchData = async () => {
+      const products = await fetch("https://fakestoreapi.com/products/");
+      const items = await products.json();
+      setItem(items);
+    };
+    fetchData().catch(console.error);
   }, []);
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data));
+    const fetchCategories = async () => {
+      const fetchedCategories = await fetch(
+        "https://fakestoreapi.com/products/categories"
+      );
+      const categories = await fetchedCategories.json();
+      setCategories(categories);
+    };
+    fetchCategories().catch(console.error);
   }, []);
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        // ...
+        console.log("uid", uid);
+      } else {
+        console.log("user is logged out");
+      }
+    });
+  }, []);
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Sign-out successful.
+        navigate("/");
+        console.log("Signed out successfully");
+      })
+      .catch((error) => {
+        // An error happened.
+      });
+  };
 
   // Store items in local storage
   useEffect(() => {
@@ -72,7 +111,6 @@ function App() {
     const newItems = addedItems.filter((item) => item.id !== id);
     setAddedItems(newItems);
   }
-
   return (
     <div className="container">
       <ShopContext.Provider
@@ -84,11 +122,24 @@ function App() {
           addedItems,
         }}
       >
-        <Heading as="h1">Ecommerce</Heading>
-        <Navbar />
+        {user ? (
+          <Avatar />
+        ) : (
+          <Heading as="h1" mb={6}>
+            Ecommerce
+          </Heading>
+        )}
+        {user ? (
+          <Button color="black" onClick={handleLogout}>
+            Logout
+          </Button>
+        ) : null}
+        <Navbar handleLogout={handleLogout} user={user} />
+
         <Routes>
+          <Route path="/" element={<Signup />} />
           <Route
-            path="/"
+            path="shop"
             element={
               <Shop
                 handleCategoryChange={handleCategoryChange}
@@ -106,6 +157,8 @@ function App() {
             path=":id"
             element={<SingleProduct product={items} addItem={addItem} />}
           />
+          <Route path="signup" element={<Signup user={user} />} />
+          <Route path="login" element={<Login user={user} />} />
         </Routes>
         <Outlet />
       </ShopContext.Provider>
